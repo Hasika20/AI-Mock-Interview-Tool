@@ -3,9 +3,9 @@
 import { useSearchParams } from "next/navigation"
 import PricingPlan from "@/app/_data/PricingPlan"
 import { useUser } from "@clerk/nextjs"
-import React from "react"
+import React, { Suspense } from "react"
 
-function Upgrade() {
+function UpgradeContent() {
 	const { user } = useUser()
 	const searchParams = useSearchParams()
 	const isSubscribed = searchParams.get("subscribed") === "true"
@@ -83,4 +83,10 @@ function Upgrade() {
 	)
 }
 
-export default Upgrade
+export default function UpgradePage() {
+	return (
+		<Suspense fallback={<div className='p-10 text-center'>Loading...</div>}>
+			<UpgradeContent />
+		</Suspense>
+	)
+}
