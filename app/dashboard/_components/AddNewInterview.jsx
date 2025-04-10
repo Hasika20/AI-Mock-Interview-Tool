@@ -11,21 +11,21 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { chatSession } from "@/utils/GeminiAIModel"
-import { LoaderCircle } from "lucide-react"
+import { LoaderCircle, Sparkles } from "lucide-react"
 import { db } from "@/utils/db"
 import { MockInterview } from "@/utils/schema"
 import { v4 as uuidv4 } from "uuid"
 import { useUser } from "@clerk/nextjs"
 import moment from "moment"
 import { useRouter } from "next/navigation"
+import { motion } from "framer-motion"
 
 function AddNewInterview() {
 	const [openDialog, setOpenDialog] = useState(false)
-	const [jobPosition, setJobPosition] = useState()
-	const [jobDesc, setJobDesc] = useState()
-	const [jobExperience, setJobExperience] = useState()
+	const [jobPosition, setJobPosition] = useState("")
+	const [jobDesc, setJobDesc] = useState("")
+	const [jobExperience, setJobExperience] = useState("")
 	const [loading, setLoading] = useState(false)
-	const [jsonResponse, setJsonResponse] = useState([])
 	const router = useRouter()
 	const { user } = useUser()
 
@@ -47,7 +47,7 @@ Give me ${process.env.NEXT_PUBLIC_INTERVIEW_QUESTION_COUNT} mock interview quest
   "answer": ""
 }
 
-Return ONLY the array, without wrapping it inside any object like "questions_and_answers".
+Return ONLY the array.
 		`
 
 		try {
@@ -62,8 +62,6 @@ Return ONLY the array, without wrapping it inside any object like "questions_and
 				throw new Error("Invalid format: Expected a JSON array.")
 			}
 
-			setJsonResponse(parsedQuestions)
-
 			const resp = await db
 				.insert(MockInterview)
 				.values({
@@ -77,7 +75,6 @@ Return ONLY the array, without wrapping it inside any object like "questions_and
 				})
 				.returning({ mockId: MockInterview.mockId })
 
-			console.log("Inserted ID:", resp)
 			setOpenDialog(false)
 			router.push("/dashboard/interview/" + resp[0]?.mockId)
 		} catch (error) {
@@ -89,59 +86,81 @@ Return ONLY the array, without wrapping it inside any object like "questions_and
 
 	return (
 		<div>
-			<div
-				className='p-10 border rounded-lg bg-secondary hover:scale-105 hover:shadow-md cursor-pointer transition-all'
+			<motion.div
+				whileHover={{ scale: 1.05 }}
+				whileTap={{ scale: 0.98 }}
+				className='p-10 border border-dashed rounded-xl bg-gradient-to-br from-zinc-800 via-zinc-900 to-zinc-950 text-white hover:shadow-lg transition-all cursor-pointer'
 				onClick={() => setOpenDialog(true)}
 			>
-				<h2 className='text-lg text-center font-medium'>+ Add New</h2>
-			</div>
+				<div className='flex flex-col items-center gap-2'>
+					<Sparkles className='text-blue-500' />
+					<h2 className='text-xl font-semibold'>+ Add New Interview</h2>
+					<p className='text-sm text-zinc-400'>Start a fresh mock interview</p>
+				</div>
+			</motion.div>
 
 			<Dialog open={openDialog} onOpenChange={setOpenDialog}>
-				<DialogContent className='max-w-3xl'>
+				<DialogContent className='max-w-3xl bg-zinc-950 text-white border border-zinc-800'>
 					<DialogHeader>
-						<DialogTitle className='text-2xl font-semibold'>
-							Setting the Stage for Your Mock Interview
+						<DialogTitle className='text-2xl font-bold text-blue-400'>
+							Let’s build your mock interview
 						</DialogTitle>
-						<DialogDescription className='text-muted-foreground'>
-							Provide a few details to tailor your mock interview experience.
+						<DialogDescription className='text-sm text-zinc-400 mt-1'>
+							Give us a few details and we’ll spin up an AI-powered experience
+							tailored for you.
 						</DialogDescription>
 					</DialogHeader>
 
 					<form onSubmit={onSubmit} className='space-y-6 mt-4'>
-						<div className='space-y-2'>
-							<label htmlFor='job-role' className='block text-sm font-medium'>
+						<div className='space-y-1'>
+							<label
+								htmlFor='job-role'
+								className='text-sm font-medium text-zinc-300'
+							>
 								Job Role / Position
 							</label>
 							<Input
 								id='job-role'
-								placeholder='Ex: Full Stack Developer'
+								placeholder='e.g. Frontend Developer'
+								className='bg-zinc-900 text-white'
 								required
+								value={jobPosition}
 								onChange={(e) => setJobPosition(e.target.value)}
 							/>
 						</div>
 
-						<div className='space-y-2'>
-							<label htmlFor='job-desc' className='block text-sm font-medium'>
+						<div className='space-y-1'>
+							<label
+								htmlFor='job-desc'
+								className='text-sm font-medium text-zinc-300'
+							>
 								Job Description / Tech Stack
 							</label>
 							<Textarea
 								id='job-desc'
-								placeholder='Ex: MongoDB, ExpressJs, ReactJs, NodeJs (MERN)'
+								placeholder='e.g. React, TailwindCSS, TypeScript, GraphQL...'
+								className='bg-zinc-900 text-white'
 								required
+								value={jobDesc}
 								onChange={(e) => setJobDesc(e.target.value)}
 							/>
 						</div>
 
-						<div className='space-y-2'>
-							<label htmlFor='experience' className='block text-sm font-medium'>
+						<div className='space-y-1'>
+							<label
+								htmlFor='experience'
+								className='text-sm font-medium text-zinc-300'
+							>
 								Experience (in Years)
 							</label>
 							<Input
 								id='experience'
-								placeholder='Ex: 5'
 								type='number'
 								max='40'
+								placeholder='e.g. 3'
+								className='bg-zinc-900 text-white'
 								required
+								value={jobExperience}
 								onChange={(e) => setJobExperience(e.target.value)}
 							/>
 						</div>
@@ -156,13 +175,13 @@ Return ONLY the array, without wrapping it inside any object like "questions_and
 							</Button>
 							<Button
 								type='submit'
-								className='cursor-pointer'
+								className='bg-blue-600 hover:bg-blue-700 text-white'
 								disabled={loading}
 							>
 								{loading ? (
 									<>
 										<LoaderCircle className='animate-spin mr-2' />
-										Generating, Please wait...
+										Generating...
 									</>
 								) : (
 									"Start Interview"
