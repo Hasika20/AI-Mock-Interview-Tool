@@ -32,12 +32,22 @@ function StartInterview() {
 				.where(eq(MockInterview.mockId, interviewId))
 
 			if (result.length > 0) {
-				const jsonMockResp = JSON.parse(result[0].jsonMockResp)
-				setMockInterviewQuestion(jsonMockResp.questions_and_answers)
-				setInterviewData(result[0])
+				let parsedJson
+				try {
+					parsedJson = JSON.parse(result[0].jsonMockResp)
+
+					// 👇 Gracefully handle both old and new formats
+					const questions =
+						parsedJson.questions ?? parsedJson.questions_and_answers ?? []
+
+					setMockInterviewQuestion(questions)
+					setInterviewData(result[0])
+				} catch (err) {
+					console.error("🧨 Error parsing jsonMockResp", err)
+				}
 			}
 		} catch (error) {
-			console.error("Failed to load interview details", error)
+			console.error("❌ Failed to load interview details:", error)
 		}
 	}
 
@@ -49,17 +59,18 @@ function StartInterview() {
 				</h1>
 
 				<div className='grid grid-cols-1 lg:grid-cols-12 gap-8'>
+					{/* Sidebar */}
 					<aside className='lg:col-span-2 hidden lg:block sticky top-20'>
 						<div className='bg-zinc-900 rounded-xl p-4 border border-zinc-800 shadow-sm'>
 							<h2 className='text-lg font-semibold mb-4'>Navigate</h2>
 							<div className='grid grid-cols-2 gap-2'>
-								{mockInterviewQuestion.map((q, idx) => (
+								{mockInterviewQuestion.map((_, idx) => (
 									<Button
 										key={idx}
 										variant={
 											idx === activeQuestionIndex ? "default" : "secondary"
 										}
-										className={`text-xs font-medium`}
+										className='text-xs font-medium'
 										onClick={() => setActiveQuestionIndex(idx)}
 									>
 										Q{idx + 1}
@@ -69,6 +80,7 @@ function StartInterview() {
 						</div>
 					</aside>
 
+					{/* Question + Answer Recording */}
 					<section className='lg:col-span-10 grid md:grid-cols-2 gap-6'>
 						<div className='bg-zinc-900 rounded-xl p-6 shadow-md border border-zinc-800'>
 							<QuestionsSection
@@ -87,6 +99,7 @@ function StartInterview() {
 					</section>
 				</div>
 
+				{/* Navigation Buttons */}
 				<div className='flex flex-col md:flex-row justify-end items-center gap-4 mt-10 border-t pt-6 border-zinc-800'>
 					{activeQuestionIndex > 0 && (
 						<Button
